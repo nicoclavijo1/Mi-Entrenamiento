@@ -1,26 +1,25 @@
-/* Mi entrenamiento - cache sencillo para que abra sin internet */
-var CACHE = "mi-entrenamiento-v1";
-var ARCHIVOS = ["./", "./index.html", "./manifest.webmanifest", "./favicon.png",
-  "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-192.png",
-  "./icons/maskable-512.png", "./icons/apple-touch-icon.png"];
+/* Mi entrenamiento - cache y aviso de actualización */
+const V = "me-1.0.2";
+const CORE = ["./","index.html","manifest.webmanifest","favicon.png",
+  "icons/icon-192.png","icons/icon-512.png","icons/maskable-192.png",
+  "icons/maskable-512.png","icons/apple-touch-icon.png"];
 
-self.addEventListener("install", function(e){
-  e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(ARCHIVOS); }).then(function(){ return self.skipWaiting(); }));
+self.addEventListener("install", e => { e.waitUntil(caches.open(V).then(c => c.addAll(CORE))) });
+self.addEventListener("message", e => { if(e.data === "skip") self.skipWaiting() });
+self.addEventListener("activate", e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
-self.addEventListener("activate", function(e){
-  e.waitUntil(caches.keys().then(function(ks){
-    return Promise.all(ks.map(function(k){ return k === CACHE ? null : caches.delete(k); }));
-  }).then(function(){ return self.clients.claim(); }));
-});
-self.addEventListener("fetch", function(e){
-  if(e.request.method !== "GET") return;
-  e.respondWith(
-    fetch(e.request).then(function(r){
-      var copia = r.clone();
-      caches.open(CACHE).then(function(c){ c.put(e.request, copia); });
-      return r;
-    }).catch(function(){
-      return caches.match(e.request).then(function(r){ return r || caches.match("./index.html"); });
-    })
-  );
+self.addEventListener("fetch", e => {
+  const r = e.request; if(r.method !== "GET") return;
+  const u = new URL(r.url);
+  if(r.mode === "navigate"){
+    e.respondWith(fetch(r).then(res => { const cp = res.clone(); caches.open(V).then(c => c.put("index.html", cp)); return res; }).catch(() => caches.match("index.html")));
+    return;
+  }
+  if(u.origin === location.origin || u.hostname === "fonts.googleapis.com" || u.hostname === "fonts.gstatic.com"){
+    e.respondWith(caches.match(r).then(hit => {
+      const net = fetch(r).then(res => { if(res && (res.ok || res.type === "opaque")){ const cp = res.clone(); caches.open(V).then(c => c.put(r, cp)); } return res; }).catch(() => hit);
+      return hit || net;
+    }));
+  }
 });
