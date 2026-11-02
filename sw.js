@@ -1,5 +1,5 @@
 /* Mi entrenamiento - cache y aviso de actualización */
-const V = "me-1.0.3";
+const V = "me-1.1.0";
 const CORE = ["./","index.html","manifest.webmanifest","favicon.png",
   "icons/icon-192.png","icons/icon-512.png","icons/maskable-192.png",
   "icons/maskable-512.png","icons/apple-touch-icon.png"];
