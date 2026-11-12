@@ -338,6 +338,7 @@ var RETO = [
   {id:"rt-sentadillas", n:"Sentadillas", img:IMG.sentadilla},
   {id:"rt-elevaciones", n:"Elevaciones de piernas", img:IMG.elevPiernas},
   {id:"rt-escaladores", n:"Escaladores", img:IMG.escaladores},
+  {id:"rt-puente", n:"Puente de glúteo a una pierna", ud:"reps por pierna", uc:"por pierna", img:IMG.puente},
   {id:"rt-hollow", n:"Hollow hold", u:"seg", crono:true, img:IMG.hollow}
 ];
 
@@ -413,7 +414,8 @@ function parseISO(s){ var p = s.split("-"); return new Date(+p[0], +p[1]-1, +p[2
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
 /* ---------- lógica Kaizen ---------- */
-function unidad(ex){ return ex.u === "seg" ? "seg" : "reps"; }
+function unidad(ex){ return ex.ud ? ex.ud : (ex.u === "seg" ? "seg" : "reps"); }
+function uCorta(ex){ return ex.uc ? ex.uc : unidad(ex); }
 function exInfo(id){
   for(var q=0;q<RETO.length;q++){ if(RETO[q].id === id) return RETO[q]; }
   for(var k in ROUTINES){
@@ -840,7 +842,7 @@ function renderHoyR(){
   for(var i=0;i<RETO.length;i++){
     var ex = RETO[i], t = topeR(ex.id), u = unidad(ex);
     h += '<div class="it"><span class="num">'+(i+1)+'</span><span class="nm">'+esc(ex.n)+'</span>'
-       + '<span class="tp">'+(t.length ? "Tope "+t.map(function(v){return valorTxt(ex,v);}).join(" · ") : "Sin tope aún")+(t.length && ex.u!=="seg" ? " "+u : "")+'</span></div>';
+       + '<span class="tp">'+(t.length ? "Tope "+t.map(function(v){return valorTxt(ex,v);}).join(" · ") : "Sin tope aún")+(t.length && ex.u!=="seg" ? " "+uCorta(ex) : "")+'</span></div>';
   }
   h += '</div></div>';
 
@@ -906,7 +908,7 @@ function renderReto(){
     h += renderCrono(ex, min);
   } else {
     var v = actual != null ? actual : (min > 0 ? min : 0);
-    h += '<div style="margin-top:16px"><div class="serie"><div class="lb"><b>Serie '+(R.s+1)+'</b><span>'+(min > 0 ? "mínimo "+min+" "+u : "libre")+'</span></div>'
+    h += '<div style="margin-top:16px"><div class="serie"><div class="lb"><b>Serie '+(R.s+1)+'</b><span>'+(min > 0 ? "mínimo "+min+" "+uCorta(ex) : (ex.uc ? ex.uc : "libre"))+'</span></div>'
        + '<div class="stp"><button type="button" data-rstep="-1" aria-label="Quitar uno">−</button>'
        + '<input type="number" inputmode="numeric" id="rv" value="'+v+'" min="'+min+'" step="1" aria-label="'+u+'">'
        + '<button type="button" data-rstep="1" aria-label="Sumar uno">+</button></div><span></span></div></div>';
@@ -1024,7 +1026,7 @@ function renderPregunta(){
     var ex = RETO[i], v = s[ex.id], t = topeR(ex.id, R.fecha), min = t[R.s] != null ? t[R.s] : 0;
     var dif = min > 0 ? v - min : 0;
     h += '<div class="it"><span class="num">'+(i+1)+'</span><span class="nm">'+esc(ex.n)+'</span>'
-       + '<span class="tp">'+valorTxt(ex, v)+(ex.u === "seg" ? "" : " "+unidad(ex))
+       + '<span class="tp">'+valorTxt(ex, v)+(ex.u === "seg" ? "" : " "+uCorta(ex))
        + (min > 0 ? (dif > 0 ? '  <span style="color:var(--grnt)">+'+dif+'</span>' : '  <span style="color:var(--mut)">=</span>') : "")
        + '</span></div>';
   }
@@ -1151,7 +1153,7 @@ function renderRecR(){
     if(t.length) algo = true;
     h += '<button type="button" class="rec" data-verexr="'+ex.id+'" aria-label="Ver cómo se hace: '+esc(ex.n)+'"><div class="nm">'+esc(ex.n)+'</div>'
       + '<div class="vl">'+(t.length ? t.map(function(v){return valorTxt(ex,v);}).join(" · ") : "—")
-      + '<small>'+(t.length ? (ex.u === "seg" ? fmtSeg(suma(t))+" en total" : suma(t)+" "+u+" en total") : "sin registro")+'</small></div>'
+      + '<small>'+(t.length ? (ex.u === "seg" ? fmtSeg(suma(t))+" en total" : suma(t)+" "+uCorta(ex)+" en total") : "sin registro")+'</small></div>'
       + '<span class="xmc">'+IC.chr+'</span></button>';
   }
   h += '</div></div>';
